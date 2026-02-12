@@ -1,0 +1,116 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String?
+
+  ownedOrganizations Organization[] @relation("OwnedOrgs")
+  memberships        Membership[]
+  refreshTokens      RefreshToken[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+
+  ownerId   String
+  owner     User     @relation("OwnedOrgs", fields: [ownerId], references: [id])
+
+  workspaces Workspace[]
+  memberships Membership[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Workspace {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  memberships Membership[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([organizationId, slug])
+}
+
+// Role and Permission models for RBAC
+model Role {
+  id          String       @id @default(cuid())
+  name        String       @unique // OWNER, ADMIN, MEMBER, GUEST
+  description String?
+
+  permissions Permission[]
+  memberships Membership[]
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Permission {
+  id          String   @id @default(cuid())
+  name        String   @unique // ORG_MANAGE_SETTINGS, etc.
+  description String?
+
+  roles       Role[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Membership {
+  id        String   @id @default(cuid())
+
+  // Link to Role model instead of simple string
+  roleId    String
+  role      Role     @relation(fields: [roleId], references: [id])
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  workspaceId String?
+  workspace   Workspace? @relation(fields: [workspaceId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, workspaceId])
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  expiresAt DateTime
+  revoked   Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
