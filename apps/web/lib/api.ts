@@ -1,8 +1,10 @@
 import axios from 'axios';
 import { useAuthStore } from './auth';
 
+const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
+  baseURL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -26,13 +28,24 @@ api.interceptors.response.use(
   },
   async (error) => {
     const originalRequest = error.config;
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (
+      error.response?.status === 401 &&
+      !originalRequest?._retry &&
+      !originalRequest?.url?.includes('/auth/login') &&
+      !originalRequest?.url?.includes('/auth/signup') &&
+      !originalRequest?.url?.includes('/auth/refresh')
+    ) {
       originalRequest._retry = true;
       try {
         const refreshToken = useAuthStore.getState().refreshToken;
+        if (!refreshToken) {
+          useAuthStore.getState().logout();
+          return Promise.reject(error);
+        }
+
         // Call refresh endpoint
         const response = await axios.post(
-          'http://localhost:3001/auth/refresh',
+          `${baseURL}/auth/refresh`,
           {},
           {
             headers: { Authorization: `Bearer ${refreshToken}` },
@@ -48,6 +61,7 @@ api.interceptors.response.use(
 
         useAuthStore.getState().setTokens(accessToken, newRefreshToken);
 
+        originalRequest.headers = originalRequest.headers ?? {};
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         return api(originalRequest);
       } catch (refreshError) {

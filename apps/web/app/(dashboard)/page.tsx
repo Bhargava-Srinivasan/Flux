@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import api from '@/lib/api';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
+import api from '@/lib/api';
 import { CreateOrganizationDialog } from '@/components/create-organization-dialog';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface Organization {
   id: string;
@@ -35,7 +35,9 @@ export default function DashboardPage() {
     fetchOrgs();
   }, []);
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="space-y-6" data-testid="org-list">
@@ -48,13 +50,13 @@ export default function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {organizations.map((org) => (
           <Link href={`/${org.id}`} key={org.id} data-testid="org-card">
-            <Card className="hover:bg-muted/50 transition-colors cursor-pointer">
+            <Card className="cursor-pointer transition-colors hover:bg-muted/50">
               <CardHeader>
                 <CardTitle>{org.name}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-sm text-muted-foreground">
-                  {org._count.workspaces} Workspaces • {org._count.memberships} Members
+                  {org._count.workspaces} Workspaces / {org._count.memberships} Members
                 </div>
               </CardContent>
             </Card>

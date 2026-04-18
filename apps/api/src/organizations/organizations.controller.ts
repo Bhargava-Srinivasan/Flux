@@ -1,20 +1,10 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  UseGuards,
-  Req,
-  ForbiddenException,
-  Param,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, Req, Param } from '@nestjs/common';
 import { OrganizationsService } from './organizations.service';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { Request } from 'express';
-import { Roles } from '../common/decorators/roles.decorator';
 import { Permissions } from '../common/decorators/permissions.decorator';
-import { RoleName, Permission } from '../common/enums/permissions.enum';
+import { Permission } from '../common/enums/permissions.enum';
 import { RolesGuard } from '../common/guards/roles.guard';
 
 @UseGuards(AuthGuard('jwt'), RolesGuard)

@@ -40,13 +40,10 @@ export class RolesGuard implements CanActivate {
     let contextOrgId = request.body?.organizationId || request.query?.organizationId;
     let contextWorkspaceId = request.body?.workspaceId || request.query?.workspaceId;
 
-    // Check path params 'id' based on route structure
-    const routePath = request.route.path;
-
     if (request.params?.id) {
-      if (routePath.includes('/organizations/:id')) {
+      if (request.baseUrl?.includes('/organizations')) {
         contextOrgId = request.params.id;
-      } else if (routePath.includes('/workspaces/:id')) {
+      } else if (request.baseUrl?.includes('/workspaces')) {
         contextWorkspaceId = request.params.id;
       }
     }

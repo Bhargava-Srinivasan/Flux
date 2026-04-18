@@ -2,6 +2,6 @@
 const nextConfig = {
   output: 'standalone',
   transpilePackages: ['@flux/types'],
-}
+};
 
-module.exports = nextConfig
+module.exports = nextConfig;

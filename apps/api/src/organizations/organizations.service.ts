@@ -1,17 +1,8 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  UseGuards,
-  Req,
-  ForbiddenException,
-  Injectable,
-} from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { PrismaService } from '../prisma/prisma.service';
-import { Prisma } from '@prisma/client';
 import { RoleName } from '../common/enums/permissions.enum';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 
 @Injectable()
 export class OrganizationsService {
@@ -48,8 +39,8 @@ export class OrganizationsService {
       });
 
       return org;
-    } catch (error: any) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    } catch (error: unknown) {
+      if (error instanceof PrismaClientKnownRequestError) {
         if (error.code === 'P2002') {
           throw new ForbiddenException('Slug already exists');
         }
@@ -79,10 +70,13 @@ export class OrganizationsService {
           select: { workspaces: true, memberships: true },
         },
       },
+      orderBy: {
+        createdAt: 'asc',
+      },
     });
   }
 
-  async invite(userId: string, orgId: string, email: string) {
+  async invite(_userId: string, _orgId: string, email: string) {
     // RBAC already checked by Guard
     return { message: `Invitation sent to ${email}` };
   }

@@ -38,6 +38,12 @@ export class WorkspacesController {
     return this.workspacesService.findAll(userId, organizationId);
   }
 
+  @Get(':id')
+  findOne(@Param('id') id: string, @Req() req: Request) {
+    const userId = req.user['userId'];
+    return this.workspacesService.findOne(userId, id);
+  }
+
   @Post(':id/members')
   @Permissions(Permission.WORKSPACE_MANAGE_MEMBERS)
   addMember(

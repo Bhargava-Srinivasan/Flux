@@ -12,6 +12,9 @@ interface Workspace {
   id: string;
   name: string;
   slug: string;
+  _count: {
+    memberships: number;
+  };
 }
 
 export default function WorkspacesPage({ params }: { params: { orgId: string } }) {
@@ -44,7 +47,6 @@ export default function WorkspacesPage({ params }: { params: { orgId: string } }
 
   return (
     <div className="space-y-8" data-testid="workspace-list">
-      {/* Header Section */}
       <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Workspaces</h1>
@@ -56,7 +58,7 @@ export default function WorkspacesPage({ params }: { params: { orgId: string } }
             <Input
               type="search"
               placeholder="Search workspaces..."
-              className="pl-8 w-[250px]"
+              className="w-[250px] pl-8"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -67,7 +69,6 @@ export default function WorkspacesPage({ params }: { params: { orgId: string } }
         </div>
       </div>
 
-      {/* Content */}
       {loading ? (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {[...Array(4)].map((_, i) => (
@@ -83,7 +84,7 @@ export default function WorkspacesPage({ params }: { params: { orgId: string } }
         >
           <div className="mx-auto flex max-w-[420px] flex-col items-center justify-center text-center">
             <div className="flex h-20 w-20 items-center justify-center rounded-full bg-muted">
-              <span className="text-3xl">📂</span>
+              <span className="text-3xl">WS</span>
             </div>
             <h3 className="mt-4 text-lg font-semibold">No workspaces yet</h3>
             <p className="mb-4 mt-2 text-sm text-muted-foreground">
@@ -96,7 +97,12 @@ export default function WorkspacesPage({ params }: { params: { orgId: string } }
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filteredWorkspaces.map((ws) => (
             <div key={ws.id} data-testid="workspace-card">
-              <WorkspaceCard id={ws.id} name={ws.name} memberCount={1} orgId={params.orgId} />
+              <WorkspaceCard
+                id={ws.id}
+                name={ws.name}
+                memberCount={ws._count.memberships}
+                orgId={params.orgId}
+              />
             </div>
           ))}
         </div>

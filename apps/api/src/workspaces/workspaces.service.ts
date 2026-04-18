@@ -1,8 +1,8 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateWorkspaceDto } from './dto/create-workspace.dto';
-import { Prisma } from '@prisma/client';
 import { RoleName } from '../common/enums/permissions.enum';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 
 @Injectable()
 export class WorkspacesService {
@@ -45,8 +45,8 @@ export class WorkspacesService {
       });
 
       return workspace;
-    } catch (error: any) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    } catch (error: unknown) {
+      if (error instanceof PrismaClientKnownRequestError) {
         if (error.code === 'P2002') {
           throw new ForbiddenException('Slug already exists in this organization');
         }
@@ -63,7 +63,17 @@ export class WorkspacesService {
     const org = await this.prisma.organization.findUnique({ where: { id: organizationId } });
 
     if (org && org.ownerId === userId) {
-      return this.prisma.workspace.findMany({ where: { organizationId } });
+      return this.prisma.workspace.findMany({
+        where: { organizationId },
+        include: {
+          _count: {
+            select: { memberships: true },
+          },
+        },
+        orderBy: {
+          createdAt: 'asc',
+        },
+      });
     }
 
     // Otherwise, return workspaces where user has membership.
@@ -76,7 +86,53 @@ export class WorkspacesService {
           },
         },
       },
+      include: {
+        _count: {
+          select: { memberships: true },
+        },
+      },
+      orderBy: {
+        createdAt: 'asc',
+      },
     });
+  }
+
+  async findOne(userId: string, workspaceId: string) {
+    const workspace = await this.prisma.workspace.findUnique({
+      where: { id: workspaceId },
+      include: {
+        organization: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            ownerId: true,
+          },
+        },
+        _count: {
+          select: { memberships: true },
+        },
+      },
+    });
+
+    if (!workspace) {
+      throw new ForbiddenException('Workspace not found');
+    }
+
+    if (workspace.organization.ownerId !== userId) {
+      const membership = await this.prisma.membership.findFirst({
+        where: {
+          userId,
+          OR: [{ workspaceId }, { organizationId: workspace.organizationId, workspaceId: null }],
+        },
+      });
+
+      if (!membership) {
+        throw new ForbiddenException('Access Denied');
+      }
+    }
+
+    return workspace;
   }
 
   async addMember(requesterId: string, workspaceId: string, memberId: string, roleName: string) {

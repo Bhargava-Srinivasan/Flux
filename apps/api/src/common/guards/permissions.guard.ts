@@ -2,7 +2,7 @@
 // In the future, we can separate them if logic becomes complex.
 // The RolesGuard checks both Roles and Permissions.
 
-import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { RolesGuard } from './roles.guard';
 
 @Injectable()

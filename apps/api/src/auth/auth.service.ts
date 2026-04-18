@@ -5,9 +5,9 @@ import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { LoginDto } from './dto/login.dto';
 import { ForbiddenException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
 import { randomUUID } from 'crypto';
 import { ConfigService } from '@nestjs/config';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 
 @Injectable()
 export class AuthService {
@@ -32,8 +32,8 @@ export class AuthService {
       const tokens = await this.getTokens(newUser.id, newUser.email);
       await this.saveRefreshToken(newUser.id, tokens.refreshToken);
       return tokens;
-    } catch (error: any) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    } catch (error: unknown) {
+      if (error instanceof PrismaClientKnownRequestError) {
         if (error.code === 'P2002') {
           throw new ForbiddenException('Email already exists');
         }
@@ -147,5 +147,23 @@ export class AuthService {
       accessToken: at,
       refreshToken: rt,
     };
+  }
+
+  async me(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        createdAt: true,
+      },
+    });
+
+    if (!user) {
+      throw new ForbiddenException('Access Denied');
+    }
+
+    return user;
   }
 }

@@ -61,7 +61,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={logout}>Log out</DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    logout();
+                    router.push('/login');
+                  }}
+                >
+                  Log out
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
